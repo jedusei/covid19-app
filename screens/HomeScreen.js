@@ -4,57 +4,21 @@ import { Image, TouchableNativeFeedback, StyleSheet, Text, Picker, View } from '
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { Ionicons, Foundation } from '@expo/vector-icons';
 
-let worldStats = [
-  {
-    title: 'Confirmed',
-    color: 'blue',
-    value: 2994761
-  },
-  {
-    title: 'Recovered',
-    color: 'green',
-    value: 878820
-  },
-  {
-    title: 'Deaths',
-    color: 'red',
-    value: 206992
-  }
-];
-let countryStats = [
-  {
-    title: 'Confirmed',
-    color: 'blue',
-    value: 1550
-  },
-  {
-    title: 'Recovered',
-    color: 'green',
-    value: 155
-  },
-  {
-    title: 'Deaths',
-    color: 'red',
-    value: 11
-  },
-  {
-    title: 'Active',
-    color: '#fccc5d',
-    value: 1384
-  },
-  {
-    title: 'Critical',
-    color: '#865e60',
-    value: 4
-  },
-  {
-    title: 'Tests',
-    color: '#5a3e71',
-    value: 100622
-  }
-];
-
 export default function HomeScreen() {
+  const [worldStats, setWorldStats] = React.useState({
+    confirmed: 2994761,
+    recovered: 878820,
+    deaths: 206992
+  });
+  const [countryStats, setCountryStats] = React.useState({
+    confirmed: 1550,
+    recovered: 155,
+    deaths: 11,
+    active: 1384,
+    critical: 4,
+    tests: 10062
+  });
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.headerView}>
@@ -64,13 +28,13 @@ export default function HomeScreen() {
         <Card
           title="Worldwide Statistics"
           icon={<Ionicons name="ios-globe" size={25} color='blue' />}>
-          <FlatList
-            numColumns={3}
-            data={worldStats}
-            key={(x) => x.title}
-            renderItem={Statistic} />
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            <Statistic label='Confirmed' color='blue' value={worldStats.confirmed} />
+            <Statistic label='Recovered' color='green' value={worldStats.recovered} />
+            <Statistic label='Deaths' color='red' value={worldStats.deaths} showBorder={false} />
+          </View>
         </Card>
-        <Text style={{ marginTop: 20, marginBottom: 5, fontWeight: 'bold' }}>Select country:</Text>
+        <Text style={{ marginTop: 20, marginBottom: 5, marginLeft: 5, fontWeight: 'bold' }}>Select country:</Text>
         <TouchableNativeFeedback>
           <View style={{ ...styles.card, flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 15 }}>
             <Image width={30} height={30} source={{ uri: "https://corona.lmao.ninja/assets/img/flags/gh.png" }} />
@@ -81,11 +45,20 @@ export default function HomeScreen() {
         <Card
           title="Statistics"
           icon={<Foundation name="graph-bar" size={25} color='green' />}>
-          <FlatList
-            numColumns={3}
-            data={countryStats}
-            key={(x) => x.title}
-            renderItem={Statistic} />
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1 }}>
+              <Statistic label='Confirmed' color='blue' value={countryStats.confirmed} />
+              <Statistic label='Active' color='#e5b45e' value={countryStats.active} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Statistic label='Recovered' color='green' value={countryStats.recovered} />
+              <Statistic label='Critical' color='#755659' value={countryStats.critical} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Statistic label='Deaths' color='red' value={countryStats.deaths} showBorder={false} />
+              <Statistic label='Tests' color='#67499b' value={countryStats.tests} showBorder={false} />
+            </View>
+          </View>
         </Card>
       </View>
     </ScrollView>
@@ -94,8 +67,8 @@ export default function HomeScreen() {
 
 function Card({ icon, title, children }) {
   return (
-    <View style={styles.card}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+    <View style={{ ...styles.card, paddingHorizontal: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5, paddingHorizontal: 10 }}>
         {icon}
         <Text style={styles.cardTitle}>{title}</Text>
       </View>
@@ -104,11 +77,11 @@ function Card({ icon, title, children }) {
   );
 }
 
-function Statistic({ item }) {
+function Statistic({ label, value, color, showBorder = true }) {
   return (
-    <View style={{ flex: 1, paddingHorizontal: 0, paddingVertical: 15 }}>
-      <Text style={{ ...styles.statisticTitle, color: item.color }}>{item.title}</Text>
-      <Text style={styles.statValue}>{item.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</Text>
+    <View style={{ flex: 1, paddingLeft: 10, paddingVertical: 15, borderRightColor: '#ece9ec', borderRightWidth: (showBorder ? 1 : 0) }}>
+      <Text style={{ ...styles.statisticTitle, color }}>{label}</Text>
+      <Text style={styles.statValue}>{value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</Text>
     </View>
   );
 }
