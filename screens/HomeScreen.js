@@ -1,8 +1,17 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Image, TouchableNativeFeedback, StyleSheet, Text, Picker, View } from 'react-native';
+import { Image, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { Ionicons, Foundation } from '@expo/vector-icons';
+
+let countries = [];
+for (let i = 0; i < 20; i++) {
+  countries.push({
+    id: i,
+    name: "Ghana",
+    flag: "https://corona.lmao.ninja/assets/img/flags/gh.png"
+  });
+}
 
 export default function HomeScreen() {
   const [worldStats, setWorldStats] = React.useState({
@@ -16,52 +25,77 @@ export default function HomeScreen() {
     deaths: 11,
     active: 1384,
     critical: 4,
-    tests: 10062
+    tests: 100062
   });
+  const [isModalVisible, setModalVisible] = React.useState(false);
+  const [isLoading, setLoading] = React.useState(false);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerView}>
-        <Text style={styles.headerText}>COVID-19 Worldwide</Text>
-      </View>
-      <View style={{ paddingHorizontal: 10, paddingVertical: 15 }}>
-        <Card
-          title="Worldwide Statistics"
-          icon={<Ionicons name="ios-globe" size={25} color='blue' />}>
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            <Statistic label='Confirmed' color='blue' value={worldStats.confirmed} />
-            <Statistic label='Recovered' color='green' value={worldStats.recovered} />
-            <Statistic label='Deaths' color='red' value={worldStats.deaths} showBorder={false} />
-          </View>
-        </Card>
-        <Text style={{ marginTop: 20, marginBottom: 5, marginLeft: 5, fontWeight: 'bold' }}>Select country:</Text>
-        <TouchableNativeFeedback>
-          <View style={{ ...styles.card, flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 15 }}>
-            <Image width={30} height={30} source={{ uri: "https://corona.lmao.ninja/assets/img/flags/gh.png" }} />
-            <Text style={{ flex: 1, fontSize: 20 }}>Ghana</Text>
-            <Ionicons name='ios-arrow-down' size={15} color='#6f6d70' />
-          </View>
-        </TouchableNativeFeedback>
-        <Card
-          title="Statistics"
-          icon={<Foundation name="graph-bar" size={25} color='green' />}>
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            <View style={{ flex: 1 }}>
-              <Statistic label='Confirmed' color='blue' value={countryStats.confirmed} />
-              <Statistic label='Active' color='#e5b45e' value={countryStats.active} />
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.headerView}>
+          <Text style={styles.headerText}>COVID-19 Worldwide</Text>
+        </View>
+        <View style={{ paddingHorizontal: 10, paddingVertical: 15 }}>
+          <Card
+            title="Worldwide Statistics"
+            icon={<Ionicons name="ios-globe" size={25} color='blue' />}>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <Statistic label='Confirmed' color='blue' value={worldStats.confirmed} />
+              <Statistic label='Recovered' color='green' value={worldStats.recovered} />
+              <Statistic label='Deaths' color='red' value={worldStats.deaths} showBorder={false} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Statistic label='Recovered' color='green' value={countryStats.recovered} />
-              <Statistic label='Critical' color='#755659' value={countryStats.critical} />
+          </Card>
+          <Text style={{ marginTop: 20, marginBottom: 5, marginLeft: 5, fontWeight: 'bold' }}>Select Country:</Text>
+          <TouchableNativeFeedback onPress={() => setModalVisible(true)}>
+            <View style={{ ...styles.card, flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 15 }}>
+              <Image width={30} height={30} source={{ uri: "https://corona.lmao.ninja/assets/img/flags/gh.png" }} />
+              <Text style={{ flex: 1, fontSize: 20 }}>Ghana</Text>
+              <Ionicons name='ios-arrow-down' size={15} color='#6f6d70' />
             </View>
-            <View style={{ flex: 1 }}>
-              <Statistic label='Deaths' color='red' value={countryStats.deaths} showBorder={false} />
-              <Statistic label='Tests' color='#67499b' value={countryStats.tests} showBorder={false} />
+          </TouchableNativeFeedback>
+          <Card
+            title="Statistics"
+            icon={<Foundation name="graph-bar" size={25} color='green' />}>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <View style={{ flex: 1 }}>
+                <Statistic label='Confirmed' color='blue' value={countryStats.confirmed} />
+                <Statistic label='Active' color='#e5b45e' value={countryStats.active} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Statistic label='Recovered' color='green' value={countryStats.recovered} />
+                <Statistic label='Critical' color='#755659' value={countryStats.critical} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Statistic label='Deaths' color='red' value={countryStats.deaths} showBorder={false} />
+                <Statistic label='Tests' color='#67499b' value={countryStats.tests} showBorder={false} />
+              </View>
             </View>
-          </View>
-        </Card>
-      </View>
-    </ScrollView>
+          </Card>
+        </View>
+      </ScrollView>
+      <Modal visible={isModalVisible} animationType='slide' onRequestClose={() => setModalVisible(false)} >
+        <FlatList
+          data={countries}
+          key={(c) => c.id}
+          renderItem=
+          {({ item }) =>
+            <TouchableNativeFeedback onPress={() => setModalVisible(false)}>
+              <View style={{ padding: 10 }}>
+                <Image width={50} height={50} source={{ uri: item.flag }} />
+                <Text style={{ fontSize: 20 }}>{item.name}</Text>
+              </View>
+            </TouchableNativeFeedback>
+          }
+          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#e0e0e0' }} />}
+        />
+      </Modal>
+      <Modal visible={isLoading} transparent={true}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', opacity: 0.5 }}>
+          <ActivityIndicator color='#fff' size={50} />
+        </View>
+      </Modal>
+    </>
   );
 }
 
