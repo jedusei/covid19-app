@@ -3,32 +3,38 @@ import * as React from 'react';
 import { Image, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { Ionicons, Foundation } from '@expo/vector-icons';
+import { getCountries, getWorldStats, getCountryStats } from '../api/COVID19_API';
 
-let countries = [];
-for (let i = 0; i < 20; i++) {
-  countries.push({
-    id: i,
+export default function HomeScreen() {
+  const [worldStats, setWorldStats] = React.useState({});
+  const [countryStats, setCountryStats] = React.useState({});
+  const [countries, setCountries] = React.useState([]);
+  const [currentCountry, setCurrentCountry] = React.useState({
     name: "Ghana",
     flag: "https://corona.lmao.ninja/assets/img/flags/gh.png"
   });
-}
-
-export default function HomeScreen() {
-  const [worldStats, setWorldStats] = React.useState({
-    confirmed: 2994761,
-    recovered: 878820,
-    deaths: 206992
-  });
-  const [countryStats, setCountryStats] = React.useState({
-    confirmed: 1550,
-    recovered: 155,
-    deaths: 11,
-    active: 1384,
-    critical: 4,
-    tests: 100062
-  });
   const [isModalVisible, setModalVisible] = React.useState(false);
-  const [isLoading, setLoading] = React.useState(false);
+  const [isLoading, setLoading] = React.useState(true);
+
+  // Load countries if not loaded yet
+  if (countries.length == 0) {
+    (async () => {
+      try {
+        let _worldStats = await getWorldStats();
+        let _countries = await getCountries();
+        let _countryStats = await getCountryStats(currentCountry.name);
+        setWorldStats(_worldStats);
+        setCountries(_countries);
+        setCountryStats(_countryStats);
+      }
+      catch (err) {
+        alert('Something went wrong. Please check your internet connection and try again.');
+      }
+      finally {
+        setLoading(false);
+      }
+    })();
+  }
 
   return (
     <>
@@ -49,8 +55,8 @@ export default function HomeScreen() {
           <Text style={{ marginTop: 20, marginBottom: 5, marginLeft: 5, fontWeight: 'bold' }}>Select Country:</Text>
           <TouchableNativeFeedback onPress={() => setModalVisible(true)}>
             <View style={{ ...styles.card, flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 15 }}>
-              <Image width={30} height={30} source={{ uri: "https://corona.lmao.ninja/assets/img/flags/gh.png" }} />
-              <Text style={{ flex: 1, fontSize: 20 }}>Ghana</Text>
+              <Image style={{ width: 30, height: 20 }} source={{ uri: currentCountry.flag }} />
+              <Text style={{ flex: 1, fontSize: 20, marginLeft: 5 }}>{currentCountry.name}</Text>
               <Ionicons name='ios-arrow-down' size={15} color='#6f6d70' />
             </View>
           </TouchableNativeFeedback>
@@ -72,26 +78,44 @@ export default function HomeScreen() {
               </View>
             </View>
           </Card>
+          <Text style={{ paddingVertical: 2, alignSelf: 'flex-end', opacity: 0.5, fontStyle: 'italic' }}>
+            Last updated at: <Text style={{ fontWeight: 'bold' }}>{countryStats.updated}</Text>
+          </Text>
         </View>
       </ScrollView>
       <Modal visible={isModalVisible} animationType='slide' onRequestClose={() => setModalVisible(false)} >
         <FlatList
           data={countries}
-          key={(c) => c.id}
+          keyExtractor={(c) => c.name}
           renderItem=
           {({ item }) =>
-            <TouchableNativeFeedback onPress={() => setModalVisible(false)}>
-              <View style={{ padding: 10 }}>
-                <Image width={50} height={50} source={{ uri: item.flag }} />
-                <Text style={{ fontSize: 20 }}>{item.name}</Text>
+            <TouchableNativeFeedback
+              onPress={async () => {
+                try {
+                  setLoading(true);
+                  setCurrentCountry(item);
+                  setCountryStats(await getCountryStats(item.name));
+                  setModalVisible(false);
+                }
+                catch (err) {
+                  alert('Something went wrong. Please check your internet connection and try again.');
+                }
+                finally {
+                  setLoading(false);
+                }
+              }
+              }>
+
+              <View style={{ padding: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <Image style={{ width: 60, height: 40 }} resizeMode='cover' source={{ uri: item.flag }} />
+                <Text style={{ fontSize: 20, marginLeft: 10 }}>{item.name}</Text>
               </View>
             </TouchableNativeFeedback>
           }
-          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#e0e0e0' }} />}
-        />
+          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#e0e0e0' }} />} />
       </Modal>
       <Modal visible={isLoading} transparent={true}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', opacity: 0.5 }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', opacity: 0.8 }}>
           <ActivityIndicator color='#fff' size={50} />
         </View>
       </Modal>
@@ -110,12 +134,11 @@ function Card({ icon, title, children }) {
     </View>
   );
 }
-
 function Statistic({ label, value, color, showBorder = true }) {
   return (
     <View style={{ flex: 1, paddingLeft: 10, paddingVertical: 15, borderRightColor: '#ece9ec', borderRightWidth: (showBorder ? 1 : 0) }}>
       <Text style={{ ...styles.statisticTitle, color }}>{label}</Text>
-      <Text style={styles.statValue}>{value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</Text>
+      <Text style={styles.statValue}>{value !== undefined ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : '--'}</Text>
     </View>
   );
 }
