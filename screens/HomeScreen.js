@@ -2,7 +2,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
 import { Image, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
-import { Ionicons, Foundation } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import moment from 'moment';
 import { getCountries, getWorldStats, getCountryStats } from '../api/COVID19_API';
 
 export default function HomeScreen() {
@@ -62,7 +63,7 @@ export default function HomeScreen() {
           </TouchableNativeFeedback>
           <Card
             title="Statistics"
-            icon={<Foundation name="graph-bar" size={25} color='green' />}>
+            icon={<Ionicons name="md-stats" size={25} color='green' />}>
             <View style={{ flex: 1, flexDirection: 'row' }}>
               <View style={{ flex: 1 }}>
                 <Statistic label='Confirmed' color='blue' value={countryStats.confirmed} />
@@ -79,7 +80,10 @@ export default function HomeScreen() {
             </View>
           </Card>
           <Text style={{ paddingVertical: 2, alignSelf: 'flex-end', opacity: 0.5, fontStyle: 'italic' }}>
-            Last updated at: <Text style={{ fontWeight: 'bold' }}>{countryStats.updated}</Text>
+            Last updated on
+            <Text style={{ fontWeight: 'bold' }}>
+              {moment(countryStats.updated).format(' DD/MM/YYYY [at] h:mm A')}
+            </Text>
           </Text>
         </View>
       </ScrollView>
