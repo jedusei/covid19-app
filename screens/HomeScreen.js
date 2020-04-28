@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Image, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
+import { Image, Platform, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
@@ -122,6 +122,16 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
       <Modal visible={isModalVisible} animationType='slide' onRequestClose={() => setModalVisible(false)} >
+        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: '#fff', elevation: 4 }}>
+
+          <TouchableNativeFeedback background={TouchableNativeFeedback.Ripple('#edebee', true)} onPress={() => setModalVisible(false)}>
+            <View style={{ borderRadius: 15, overflow: 'hidden' }}>
+              <Ionicons name={Platform.os == 'ios' ? 'ios-arrow-back' : 'md-arrow-back'} size={30} />
+            </View>
+          </TouchableNativeFeedback>
+
+          <Text style={{ marginLeft: 15, fontSize: 20, fontWeight: 'bold' }}>Select Country</Text>
+        </View>
         <FlatList
           data={countries}
           keyExtractor={(c) => c.name}
@@ -151,6 +161,7 @@ export default function HomeScreen() {
               </View>
             </TouchableNativeFeedback>
           }
+          contentContainerStyle={{ backgroundColor: '#edebee' }}
           ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#e0e0e0' }} />} />
       </Modal>
       <Modal visible={isLoading} transparent={true}>
