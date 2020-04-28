@@ -17,29 +17,38 @@ export default function HomeScreen() {
   const [isModalVisible, setModalVisible] = React.useState(false);
   const [isLoading, setLoading] = React.useState(true);
 
-  // Load countries if not loaded yet
+
   if (countries.length == 0) {
-    (async () => {
-      try {
-        let _worldStats = await getWorldStats();
-        let _countries = await getCountries();
-        let _countryStats = await getCountryStats(currentCountry.name);
-        setWorldStats(_worldStats);
-        setCountries(_countries);
-        setCountryStats(_countryStats);
-      }
-      catch (err) {
-        alert('Something went wrong. Please check your internet connection and try again.');
-      }
-      finally {
-        setLoading(false);
-      }
-    })();
+    // Load countries and stats if not loaded yet
+    if (isLoading) {
+      (async () => {
+        try {
+          let _worldStats = await getWorldStats();
+          let _countries = await getCountries();
+          let _countryStats = await getCountryStats(currentCountry.name);
+          setWorldStats(_worldStats);
+          setCountries(_countries);
+          setCountryStats(_countryStats);
+        }
+        catch (err) {
+          // Small delay 
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          alert('Please check your internet connection and try again.');
+        }
+        finally {
+          setLoading(false);
+        }
+      })();
+    }
+    else if (isModalVisible) {
+      alert('Connect to the internet and tap the refresh button to load the countries.');
+      setModalVisible(false);
+    }
   }
 
   return (
     <>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView style={styles.container}>
         <View style={styles.headerView}>
           <Text style={styles.headerText}>COVID-19 Worldwide</Text>
         </View>
@@ -79,12 +88,37 @@ export default function HomeScreen() {
               </View>
             </View>
           </Card>
-          <Text style={{ paddingVertical: 2, alignSelf: 'flex-end', opacity: 0.5, fontStyle: 'italic' }}>
+          <Text style={styles.updatedText}>
             Last updated on
             <Text style={{ fontWeight: 'bold' }}>
               {moment(countryStats.updated).format(' DD/MM/YYYY [at] h:mm A')}
             </Text>
           </Text>
+          <TouchableNativeFeedback
+            onPress={async () => {
+              setLoading(true);
+              if (countries.length != 0) {
+                try {
+                  let _worldStats = await getWorldStats();
+                  let _countryStats = await getCountryStats(currentCountry.name);
+                  setWorldStats(_worldStats);
+                  setCountryStats(_countryStats);
+                }
+                catch (err) {
+                  // Small delay
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                  alert('Please check your internet connection and try again.');
+                }
+                finally {
+                  setLoading(false);
+                }
+              }
+            }
+            }>
+            <View style={styles.refreshBtn}>
+              <Text style={styles.refreshBtnTxt}>REFRESH</Text>
+            </View>
+          </TouchableNativeFeedback>
         </View>
       </ScrollView>
       <Modal visible={isModalVisible} animationType='slide' onRequestClose={() => setModalVisible(false)} >
@@ -97,11 +131,12 @@ export default function HomeScreen() {
               onPress={async () => {
                 try {
                   setLoading(true);
-                  setCurrentCountry(item);
                   setCountryStats(await getCountryStats(item.name));
+                  setCurrentCountry(item);
                   setModalVisible(false);
                 }
                 catch (err) {
+                  await new Promise((resolve) => setTimeout(resolve, 500));
                   alert('Something went wrong. Please check your internet connection and try again.');
                 }
                 finally {
@@ -178,5 +213,23 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: 'bold'
+  },
+  updatedText: {
+    paddingVertical: 2,
+    alignSelf: 'flex-end',
+    opacity: 0.5,
+    fontStyle: 'italic',
+    marginBottom: 40
+  },
+  refreshBtn: {
+    backgroundColor: "green",
+    elevation: 4,
+    borderRadius: 5,
+    padding: 10,
+    alignSelf: 'center'
+  },
+  refreshBtnTxt: {
+    color: "white",
+    fontSize: 20
   }
 });
