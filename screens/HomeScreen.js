@@ -1,6 +1,5 @@
-import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { Image, Platform, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View } from 'react-native';
+import { Image, Platform, ActivityIndicator, TouchableNativeFeedback, StyleSheet, Text, Modal, View, Alert } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
@@ -17,34 +16,37 @@ export default function HomeScreen() {
   const [isModalVisible, setModalVisible] = React.useState(false);
   const [isLoading, setLoading] = React.useState(true);
 
-
-  if (countries.length == 0) {
-    // Load countries and stats if not loaded yet
+  // Load countries
+  React.useEffect(() => {
     if (isLoading) {
       (async () => {
         try {
           let _worldStats = await getWorldStats();
-          let _countries = await getCountries();
           let _countryStats = await getCountryStats(currentCountry.name);
+          if (countries.length == 0)
+            setCountries(await getCountries());
+
           setWorldStats(_worldStats);
-          setCountries(_countries);
           setCountryStats(_countryStats);
         }
-        catch (err) {
-          // Small delay 
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          alert('Please check your internet connection and try again.');
+        catch{
+          await new Promise(resolve => {
+            setTimeout(
+              Alert.alert,
+              1000,
+              'Network Error',
+              'Please check your internet connection.',
+              [{ text: 'OK', onPress: resolve }],
+              { cancelable: false }
+            );
+          });
         }
         finally {
           setLoading(false);
         }
       })();
     }
-    else if (isModalVisible) {
-      alert('Connect to the internet and tap the refresh button to load the countries.');
-      setModalVisible(false);
-    }
-  }
+  }, [isLoading]);
 
   return (
     <>
@@ -63,7 +65,13 @@ export default function HomeScreen() {
             </View>
           </Card>
           <Text style={{ marginTop: 20, marginBottom: 5, marginLeft: 5, fontWeight: 'bold' }}>Select Country:</Text>
-          <TouchableNativeFeedback onPress={() => setModalVisible(true)}>
+          <TouchableNativeFeedback onPress={() => {
+            if (countries.length == 0)
+              Alert.alert("Countries not loaded", "Tap the refresh button to load the countries.");
+            else
+              setModalVisible(true);
+          }
+          }>
             <View style={{ ...styles.card, flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingRight: 15 }}>
               <Image style={{ width: 30, height: 20 }} source={{ uri: currentCountry.flag }} />
               <Text style={{ flex: 1, fontSize: 20, marginLeft: 5 }}>{currentCountry.name}</Text>
@@ -88,31 +96,16 @@ export default function HomeScreen() {
               </View>
             </View>
           </Card>
-          <Text style={styles.updatedText}>
+          <Text style={{ ...styles.updatedText, opacity: (countryStats.updated ? styles.updatedText.opacity : 0) }}>
             Last updated on
             <Text style={{ fontWeight: 'bold' }}>
               {moment(countryStats.updated).format(' DD/MM/YYYY [at] h:mm A')}
             </Text>
           </Text>
           <TouchableNativeFeedback
-            onPress={async () => {
+            onPress={() => {
               setLoading(true);
-              if (countries.length != 0) {
-                try {
-                  let _worldStats = await getWorldStats();
-                  let _countryStats = await getCountryStats(currentCountry.name);
-                  setWorldStats(_worldStats);
-                  setCountryStats(_countryStats);
-                }
-                catch (err) {
-                  // Small delay
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                  alert('Please check your internet connection and try again.');
-                }
-                finally {
-                  setLoading(false);
-                }
-              }
+              setCurrentCountry(currentCountry);
             }
             }>
             <View style={styles.refreshBtn}>
@@ -139,19 +132,9 @@ export default function HomeScreen() {
           {({ item }) =>
             <TouchableNativeFeedback
               onPress={async () => {
-                try {
-                  setLoading(true);
-                  setCountryStats(await getCountryStats(item.name));
-                  setCurrentCountry(item);
-                  setModalVisible(false);
-                }
-                catch (err) {
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                  alert('Something went wrong. Please check your internet connection and try again.');
-                }
-                finally {
-                  setLoading(false);
-                }
+                setLoading(true);
+                setCurrentCountry(item);
+                setModalVisible(false);
               }
               }>
 
@@ -229,7 +212,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     alignSelf: 'flex-end',
     opacity: 0.5,
-    fontStyle: 'italic',
     marginBottom: 40
   },
   refreshBtn: {
